@@ -23,9 +23,7 @@ def send_welcome(message):
 def fatal(message):
     game = Game(message)
     game.update_location_id()
-    #bot.reply_to(message, str(game.usr.location))
     dsc = game.create_description()
-
     bot.send_message(message.chat.id, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
 
 # Handle '/editfatal'
@@ -98,7 +96,37 @@ def rollGURPS(message):
             text += " ≤ "+arg[1]+u"\nУспех"
     bot.reply_to(message, text)
 
-# ---- ----#
+
+# ---- GURPS ----
+
+import random
+from bs4 import BeautifulSoup
+
+# Handle '/gurps'
+@bot.message_handler(commands=['gurps', 'GURPS'])
+def gurps(message):
+    with open('bots/rollbot/gurps.xml','r') as gurps_file:
+        soup = BeautifulSoup(gurps_file, 'lxml')
+        abilities = soup.find_all('gurps')
+        ab = random.choice(abilities)
+        bot.reply_to(message, ab.text, parse_mode='Markdown')
+
+
+# Handle '/editfatal'
+@bot.message_handler(commands=['editgurps'])
+def editgurps(message):
+    bot.reply_to(message, 'Вкидывай файл:')
+    bot.register_next_step_handler(message, gurps_file)
+
+def gurps_file(message):
+    if message.document:
+        file_info = bot.get_file(message.document.file_id)
+        file = bot.download_file(file_info.file_path)
+        with open('bots/rollbot/gurps.xml','wb') as new_file:
+            new_file.write(file)
+        bot.reply_to(message, 'Добавлено!')
+
+# ---- NOT-COMAND HANDLERS ---- #
 
 @bot.message_handler(func=lambda m: True, content_types=['text'])
 def register_fatal(message):
@@ -107,7 +135,6 @@ def register_fatal(message):
         return
     game.update_location_id(message.text)
     dsc = game.create_description()
-
     bot.reply_to(message, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
 
 @bot.message_handler(func=lambda m: True, content_types=['new_chat_members'])
