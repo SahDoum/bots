@@ -27,28 +27,6 @@ def fatal(message):
     dsc = game.create_description()
 
     bot.send_message(message.chat.id, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
-    if dsc['buttons'] != KEYBOARD_REMOVE_MARKUP:
-        bot.register_next_step_handler(message, next_fatal)
-
-# Handle next message after /fatal
-def test_fatal(message):
-    bot.reply_to(message, 'Nope')
-
-def next_fatal(message):
-    if message.text.split(' ')[0] == '/fatal':
-        return
-    game = Game(message)
-    if not game.is_msg_fatal(message.text):
-        #bot.reply_to(message, 'Loooser')
-        bot.register_next_step_handler(message, next_fatal)
-        return
-    game.update_location_id(message.text)
-    dsc = game.create_description()
-
-    bot.reply_to(message, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
-    if dsc['buttons'] != KEYBOARD_REMOVE_MARKUP:
-        bot.register_next_step_handler(message, next_fatal)
-
 
 # Handle '/editfatal'
 @bot.message_handler(commands=['editfatal'])
@@ -121,6 +99,16 @@ def rollGURPS(message):
     bot.reply_to(message, text)
 
 # ---- ----#
+
+@bot.message_handler(func=lambda m: True, content_types=['text'])
+def register_fatal(message):
+    game = Game(message)
+    if not game.is_msg_fatal(message.text):
+        return
+    game.update_location_id(message.text)
+    dsc = game.create_description()
+
+    bot.reply_to(message, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
 
 @bot.message_handler(func=lambda m: True, content_types=['new_chat_members'])
 def new_chat_participant(message):
