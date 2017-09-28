@@ -82,7 +82,7 @@ class Editor:
     @staticmethod
     def import_from_file(file):
         soup = BeautifulSoup(file, 'lxml')
-        locations = soup.find_all('location')
+        locations = soup.find_all('loc')
 
         for loc in locations:
             Editor.add_location(loc)
@@ -97,7 +97,7 @@ class Editor:
         db.session.commit()
         db.session.refresh(location)
         loc_id = location.id
-        buttons = loc.find_all('button')
+        buttons = loc.find_all('btn')
         print(location)
         for btn in buttons:
             btn_dsc = btn.text

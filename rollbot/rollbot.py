@@ -2,9 +2,30 @@ import logging
 
 from bots.settings import API_TOKEN1
 import telebot
-from .fatal import Game, Editor, KEYBOARD_REMOVE_MARKUP
+from .fatal import Game, Editor
 
 import dice
+
+text_messages = {
+    'help':
+        u'Во многой мудрости много печали; и кто умножает познания, умножает скорбь.\n'
+        u'Но ищущему знания я поведаю свои команды:\n'
+        u'/help - информация о боте\n'
+        u'/roll - броски дайсов\n'
+        u'/r - короткая команда для /roll\n'
+        u'/rf - бросок в FATE\n'
+        u'/rg - бросок в GURPS\n'
+        u'/fatal - используй команду эту с большой осторожностью\n'
+        u'/gurps - накинь себе персонажа, ну что же ты, скорее!\n',
+
+    'start':
+        u'Bot enabled...\n'
+        u'Protocol alpha is running...\n'
+        u'System has confirmed your access...\n'
+        u'You are welcome to use!\n'
+        u'For more information use command /help\n'
+}
+
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)
@@ -14,7 +35,12 @@ bot = telebot.TeleBot(API_TOKEN1, threaded=False)
 # Handle '/start'
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Bot enabled")
+    bot.reply_to(message, text_messages['start'])
+
+# Handle '/help'
+@bot.message_handler(commands=['help'])
+def help (message):
+    bot.reply_to(message, text_messages['help'])
 
 # ---- FATAL ----
 
