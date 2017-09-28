@@ -228,19 +228,28 @@ class CatalogManager:
 
     @staticmethod
     def get_books_by_query(query):
-        cat = Catalog.query.filter(Catalog.name.like(query+'%')).first()
-        request = or_(Book.name.like('%'+query+'%'), Book.author.like('%'+query+'%'))
-        if cat:
-            request = or_(Book.catalog==cat.name, request)
-        books = Book.query.filter(request).all()
+        offset = int(query.offset) if query.offset else 0
+        books_limit = 10
+        request = query.query
+
+        catalog = Catalog.query.filter(Catalog.name.like(request+'%')).first()
+        db_request = or_(Book.name.like('%'+request+'%'), Book.author.like('%'+request+'%'))
+        if catalog:
+            db_request = or_(Book.catalog==catalog.name, db_request)
+        db_query = Book.query.filter(db_request).limit(books_limit).offset(offset)
+
+        books = db_query.all()
         return books
 
     @staticmethod
     def get_catalog_inline(query):
         books = CatalogManager.get_books_by_query(query)
+        offset = int(query.offset) if query.offset else 0
+        next_offset = offset+len(books)
 
         if books:
             answer = []
+            # генерим инлайновые панельки для книг
             for book in books:
                 title = '"{}" {}'.format(book.name, book.author)
                 # str(i) <- поменять
@@ -265,9 +274,9 @@ class CatalogManager:
                         input_message_content=book_dsc
                     )
                 answer.append(result)
-            return answer
+            return (answer, str(next_offset))
 
-        return None
+        return (None, None)
 
     @staticmethod
     def get_catalog_list_inline(cat_name):

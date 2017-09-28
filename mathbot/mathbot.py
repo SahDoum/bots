@@ -455,12 +455,12 @@ def set_moder(message):
 
 @bot.inline_handler(func=lambda query: len(query.query) > 0)
 def query_doc(query):
-    cat_name = query.query
-    answer = CatalogManager.get_catalog_inline(cat_name)
+    answer, next_offset = CatalogManager.get_catalog_inline(query)
     if answer:
-        bot.answer_inline_query(query.id, answer)
+        bot.answer_inline_query(query.id, answer, next_offset=next_offset)
 
 """
+# Если будешь восстанавливать, поменяй метод, чтобы н передавал не query.query, а сразу query
 @bot.inline_handler(func=lambda query: len(query.query) == 0)
 def query_lib(query):
     cat_name = query.query
