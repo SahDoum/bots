@@ -62,6 +62,8 @@ text_messages = {
 BOT_NAME = '@sosiska_v_teste_bot'
 def commands_handler(cmnds):
     def wrapped(msg):
+        if not msg.text:
+            return False
         s=msg.text.split(' ')[0]
         if s in cmnds:
             return True
@@ -72,7 +74,6 @@ def commands_handler(cmnds):
 
 bot = telebot.TeleBot(API_TOKEN2, threaded=False)
 
-
     # ---- ---- ---- ---- ----
     # ---- BASIC COMMANDS ----
     # ---- ---- ---- ---- ----
@@ -80,13 +81,11 @@ bot = telebot.TeleBot(API_TOKEN2, threaded=False)
 # Handle '/start'
 @bot.message_handler(func=commands_handler(['/start', '/help']))
 def send_welcome(message):
-    #bot.send_photo(message.chat.id, 'https://t.me/linkfortest/12', caption=text_messages['help'], reply_to_message_id=message.message_id)
     bot.send_message(message.chat.id, text_messages['help'])
 
 # Handle '/links'
 @bot.message_handler(func=commands_handler(['/links']))
 def links(message):
-    #bot.send_photo(message.chat.id, 'https://t.me/linkfortest/12', caption=text_messages['help'], reply_to_message_id=message.message_id)
     bot.send_message(message.chat.id, text_messages['links'], disable_web_page_preview=True, parse_mode='Markdown')
 
 def delete_message(message):
@@ -137,8 +136,6 @@ def callback_inline(call):
         cat_id = int(call.data.split(' ', maxsplit=1)[1])
         dsc = CatalogManager.generate_catalog_dsc(cat_id)
         dsc += '_Попробуйте набрать в поле для сообщения_ @sosiska\_v\_teste\_bot _и название/автора/раздел книги, чтобы быстро скинуть её в чат._'
-        #bot.send_message(call.message.chat.id, dsc, )
-
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=dsc, parse_mode='Markdown', disable_web_page_preview=True)
 
     # ---- ---- ----

@@ -30,6 +30,8 @@ text_messages = {
 BOT_NAME = '@rollclub_bot'
 def commands_handler(cmnds):
     def wrapped(msg):
+        if not msg.text:
+            return False
         s=msg.text.split(' ')[0]
         if s in cmnds:
             return True
