@@ -26,6 +26,17 @@ text_messages = {
         u'For more information use command /help\n'
 }
 
+# Обработчик команд в функцию для хендлера распознающую команды
+BOT_NAME = '@rollclub_bot'
+def commands_handler(cmnds):
+    def wrapped(msg):
+        s=msg.text.split(' ')[0]
+        if s in cmnds:
+            return True
+        if s.endswith(BOT_NAME) and s.split('@')[0] in cmnds:
+            return True
+        return False
+    return wrapped
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)
@@ -33,19 +44,19 @@ telebot.logger.setLevel(logging.DEBUG)
 bot = telebot.TeleBot(API_TOKEN1, threaded=False)
 
 # Handle '/start'
-@bot.message_handler(commands=['start'])
+@bot.message_handler(func=commands_handler(['/start']))
 def send_welcome(message):
     bot.reply_to(message, text_messages['start'])
 
 # Handle '/help'
-@bot.message_handler(commands=['help'])
+@bot.message_handler(func=commands_handler(['/help']))
 def help (message):
     bot.reply_to(message, text_messages['help'])
 
 # ---- FATAL ----
 
 # Handle '/fatal'
-@bot.message_handler(commands=['fatal'])
+@bot.message_handler(func=commands_handler(['/fatal']))
 def fatal(message):
     game = Game(message)
     game.update_location_id()
@@ -53,7 +64,7 @@ def fatal(message):
     bot.send_message(message.chat.id, dsc['text'], parse_mode='Markdown', reply_markup=dsc['buttons'])
 
 # Handle '/editfatal'
-@bot.message_handler(commands=['editfatal'])
+@bot.message_handler(func=commands_handler(['/editfatal']))
 def editfatal(message):
     bot.reply_to(message, 'Вкидывай файл:')
     bot.register_next_step_handler(message, fatal_file)
@@ -74,7 +85,7 @@ def fatal_file(message):
 # ---- Different rolls ----
 
 # Handle '/roll' 'r'
-@bot.message_handler(commands=['roll', 'r'])
+@bot.message_handler(func=commands_handler(['/roll', '/r']))
 def roll (message):
     arg = message.text.split(' ')
     if len(arg)>1:
@@ -87,7 +98,7 @@ def roll (message):
         bot.reply_to(message, u'Вжух:\n'+str(dice.roll('4d6')))
 
 # Handle '/rf'
-@bot.message_handler(commands=['rf'])
+@bot.message_handler(func=commands_handler(['/rf']))
 def rollFate (message):
     roll = dice.roll('4d3')
     result = 0
@@ -110,7 +121,7 @@ def rollFate (message):
     bot.reply_to(message, text)
 
 # Handle '/rg'
-@bot.message_handler(commands=['rg'])
+@bot.message_handler(func=commands_handler(['/rg']))
 def rollGURPS(message):
     arg = message.text.split(' ')
     roll = dice.roll('3d6t')
@@ -129,7 +140,7 @@ import random
 from bs4 import BeautifulSoup
 
 # Handle '/gurps'
-@bot.message_handler(commands=['gurps', 'GURPS'])
+@bot.message_handler(func=commands_handler(['/gurps', '/GURPS']))
 def gurps(message):
     with open('bots/rollbot/gurps.xml','r') as gurps_file:
         soup = BeautifulSoup(gurps_file, 'lxml')
@@ -139,7 +150,7 @@ def gurps(message):
 
 
 # Handle '/editfatal'
-@bot.message_handler(commands=['editgurps'])
+@bot.message_handler(func=commands_handler(['/editgurps']))
 def editgurps(message):
     bot.reply_to(message, 'Вкидывай файл:')
     bot.register_next_step_handler(message, gurps_file)
@@ -154,6 +165,7 @@ def gurps_file(message):
 
 # ---- NOT-COMAND HANDLERS ---- #
 
+# FATAL
 @bot.message_handler(func=lambda m: True, content_types=['text'])
 def register_fatal(message):
     game = Game(message)

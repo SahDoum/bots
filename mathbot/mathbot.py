@@ -11,8 +11,6 @@ import time
 #from catalog import engine
 #import time
 
-bot = telebot.TeleBot(API_TOKEN2, threaded=False)
-
 CHANNEL_NAME = '@mathcatalog'
 
 text_messages = {
@@ -60,18 +58,33 @@ text_messages = {
         '(https://t.me/mathcatalog)\n'
 }
 
+# Обработчик команд в функцию для хендлера распознающую команды
+BOT_NAME = '@sosiska_v_teste_bot'
+def commands_handler(cmnds):
+    def wrapped(msg):
+        s=msg.text.split(' ')[0]
+        if s in cmnds:
+            return True
+        if s.endswith(BOT_NAME) and s.split('@')[0] in cmnds:
+            return True
+        return False
+    return wrapped
+
+bot = telebot.TeleBot(API_TOKEN2, threaded=False)
+
+
     # ---- ---- ---- ---- ----
     # ---- BASIC COMMANDS ----
     # ---- ---- ---- ---- ----
 
 # Handle '/start'
-@bot.message_handler(commands=['start', 'help'])
+@bot.message_handler(func=commands_handler(['/start', '/help']))
 def send_welcome(message):
     #bot.send_photo(message.chat.id, 'https://t.me/linkfortest/12', caption=text_messages['help'], reply_to_message_id=message.message_id)
     bot.send_message(message.chat.id, text_messages['help'])
 
 # Handle '/links'
-@bot.message_handler(commands=['links'])
+@bot.message_handler(func=commands_handler(['/links']))
 def links(message):
     #bot.send_photo(message.chat.id, 'https://t.me/linkfortest/12', caption=text_messages['help'], reply_to_message_id=message.message_id)
     bot.send_message(message.chat.id, text_messages['links'], disable_web_page_preview=True, parse_mode='Markdown')
@@ -108,7 +121,7 @@ def admininfo(message):
     # ---- ---- ---- ----
 
 # Handle '/lit'
-@bot.message_handler(commands=['lit', 'catalog', 'lib'])
+@bot.message_handler(func=commands_handler(['/lit', '/catalog', '/lib']))
 def catalog_list(message):
     keyboard = CatalogManager.generate_catalogs_button_keyboard()
     catalog_message = bot.reply_to(message, "Список каталогов:", reply_markup=keyboard)
@@ -133,7 +146,7 @@ def callback_inline(call):
     # ---- ---- ----
 
 # Handle '/edit'
-@bot.message_handler(commands=['edit'])
+@bot.message_handler(func=commands_handler(['/edit']))
 def edit(message):
     usr = User.log_by_message(message)
     if not usr.can_edit():
@@ -275,7 +288,7 @@ def set_catalog2(message):
     # ---- ---- ----
 
 # Handle '/addcatalog'
-@bot.message_handler(commands=['addcatalog'])
+@bot.message_handler(func=commands_handler(['/addcatalog']))
 def add_new_catalog(message):
     usr = User.log_by_message(message)
     if not usr.can_edit():
@@ -290,7 +303,7 @@ def add_new_catalog(message):
             bot.reply_to(message, 'Ошибка')
 
 # Handle '/addbook'
-@bot.message_handler(commands=['addbook', 'add'])
+@bot.message_handler(func=commands_handler(['/addbook', '/add']))
 def add_book(message):
     usr = User.log_by_message(message)
     if not usr.can_add():
@@ -415,7 +428,7 @@ def channel_book_description_no_markdown(book, markdown=True):
 #    usr.register_user()
 #    bot.reply_to(message, 'Дарова, создатель!')
 
-@bot.message_handler(commands=['setadmin'])
+@bot.message_handler(func=commands_handler(['/setadmin']))
 def admin(message):
     usr = User.log_by_message(message)
     if not usr.can_assign_admin():
@@ -432,7 +445,7 @@ def set_admin(message):
     usr.register_user()
     bot.reply_to(message, 'Админ добавлен')
 
-@bot.message_handler(commands=['setmoder'])
+@bot.message_handler(func=commands_handler(['/setmoder']))
 def moder(message):
     usr = User.log_by_message(message)
     if not usr.can_assign_admin():
@@ -460,7 +473,7 @@ def query_doc(query):
         bot.answer_inline_query(query.id, answer, next_offset=next_offset)
 
 """
-# Если будешь восстанавливать, поменяй метод, чтобы н передавал не query.query, а сразу query
+# Если будешь восстанавливать, поменяй метод, чтобы он передавал не query.query, а сразу query
 @bot.inline_handler(func=lambda query: len(query.query) == 0)
 def query_lib(query):
     cat_name = query.query
