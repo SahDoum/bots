@@ -1,21 +1,7 @@
-from sqlalchemy import Column, Integer, BigInteger, String
-from sqlalchemy import TEXT
+from sqlalchemy import Column, Integer, BigInteger, String, TEXT
 
 from bots import db
 
-##from flask_sqlalchemy import SQLAlchemy
-##from bots.flask_app import app
-
-#engine = create_engine(SQLALCHEMY_DATABASE_URI2, pool_recycle=200)
-#Session = sessionmaker(bind=engine)
-#session = Session()
-#Base = declarative_base()
-#md = Base.metadata
-
-##app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI2
-##app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
-##app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-##db = SQLAlchemy(app)
 
 class Catalog(db.Model):
     __tablename__ = 'catalogs'
@@ -27,6 +13,7 @@ class Catalog(db.Model):
 
     def __repr__(self):
         return '<Catalog %r>' % (self.name)
+
 
 class Book(db.Model):
     __tablename__ = 'books'
@@ -66,9 +53,9 @@ class ProposeBook(db.Model):
         self.usr_id = usr_id
         self.usr_name = usr_name
 
-
     def __repr__(self):
         return 'PropBook %r' % (self.name)
+
 
 # status = 'Creator' 'Admin' 'Moder' 'Banned'
 class User(db.Model):
@@ -84,7 +71,9 @@ class User(db.Model):
         self.status = status
 
     def __repr__(self):
-        return 'Usr %r name %r status %r' % (self.usr_id, self.name, self.status)
+        return 'Usr %r name %r status %r' % (self.usr_id,
+                                             self.name,
+                                             self.status)
 
     @staticmethod
     def logUser(usr_id):

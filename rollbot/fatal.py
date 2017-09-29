@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 KEYBOARD_REMOVE_MARKUP = types.ReplyKeyboardRemove()
 
+
 class Game:
 
     def __init__(self, message):
@@ -30,7 +31,7 @@ class Game:
             if loc_id == -1:
                 loc_key = 'default'
             else:
-                #loc_key = 'default'
+                # loc_key = 'default'
                 return
         else:
             btn = Button.query.filter_by(loc_id=loc_id, dsc=msg).first()
@@ -49,16 +50,17 @@ class Game:
         loc = Location.query.get(loc_id)
         btn_list = Button.query.filter_by(loc_id=loc_id).all()
 
-        if loc == None:
+        if loc is None:
             self.usr.location = -1
             db.session.commit()
-            return {'text':str(loc_id), 'buttons':None}
+            return {'text': str(loc_id), 'buttons': None}
 
         text = loc.dsc
 
         markup = None
         if btn_list:
-            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True,
+                                               resize_keyboard=True)
             for btn in btn_list:
                 markup.add(btn.dsc)
         else:
@@ -66,8 +68,9 @@ class Game:
             self.usr.location = -1
             db.session.commit()
 
-        dsc = {'text':text, 'buttons':markup}
+        dsc = {'text': text, 'buttons': markup}
         return dsc
+
 
 class Editor:
 

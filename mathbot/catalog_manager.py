@@ -3,8 +3,6 @@ from bots import db
 from telebot import types
 from sqlalchemy import or_
 
-# Кейтен Глеб Жора Миша Diskin Я
-admins_id = {197511978, 245259287, 148599431, 147100358, 60568026, 155493213}
 
 class CatalogManager:
     edit_list = {}
@@ -19,12 +17,13 @@ class CatalogManager:
         return cat.name
 
     @staticmethod
-    def generate_catalogs_button_keyboard(tag='catalog'):
+    def catalogs_button_keyboard(tag='catalog'):
         catalogs = Catalog.query.all()
         keyboard = types.InlineKeyboardMarkup()
         for cat in catalogs:
             callback = tag+' '+str(cat.id)
-            button = types.InlineKeyboardButton(text=cat.name, callback_data=callback)
+            button = types.InlineKeyboardButton(text=cat.name,
+                                                callback_data=callback)
             keyboard.add(button)
         return keyboard
 
@@ -38,8 +37,12 @@ class CatalogManager:
             keyboard.add(button)
         return keyboard
 
+    # ---- ---- ---- ----
+    # ---- DESCRIPTIONS ----
+    # ---- ---- ---- ----
+
     @staticmethod
-    def generate_catalog_dsc(cat_id):
+    def catalog_dsc(cat_id):
         cat = Catalog.query.get(cat_id)
         books = Book.query.filter_by(catalog=cat.name)
 
@@ -47,16 +50,16 @@ class CatalogManager:
             return "``` В этом разделе пока нет книг. ```"
 
         dsc = "``` Список книг в разделе '%s':```\n\n" % cat.name
-        i=1
+        i = 1
         for book in books:
-            dsc += '{}. {}\n'.format(i, CatalogManager.generate_book_dsc(book))
-            i+=1
+            dsc += '{}. {}\n'.format(i, CatalogManager.book_dsc(book))
+            i += 1
         return dsc
 
     @staticmethod
-    def generate_book_dsc(book):
+    def book_dsc(book):
         if book.link:
-            book_name = '"[{}]({})"'.format(book.name,book.link)
+            book_name = '"[{}]({})"'.format(book.name, book.link)
         else:
             book_name = '*"{}"*'.format(book.name)
         dsc = '{} {}\n'.format(book_name, book.author)
@@ -66,7 +69,7 @@ class CatalogManager:
         return dsc
 
     @staticmethod
-    def generate_book_dsc_no_markdown(book):
+    def book_dsc_no_markdown(book):
         dsc = '{} {}\n'.format(book.name, book.author)
 
         if book.comments:
@@ -81,7 +84,7 @@ class CatalogManager:
 
     @staticmethod
     def add_catalog(cat_name):
-        if Catalog.query.filter_by(name=cat_name).first() != None:
+        if Catalog.query.filter_by(name=cat_name).first() is not None:
             return False
         cat = Catalog(cat_name)
         db.session.add(cat)
@@ -90,11 +93,11 @@ class CatalogManager:
 
     @staticmethod
     def is_catalog_name(cat_name):
-        return Catalog.query.filter_by(name=cat_name).first() != None
+        return Catalog.query.filter_by(name=cat_name).first() is not None
 
     @staticmethod
     def save_cat_id(cat_id, usr_id):
-        CatalogManager.catalog_list[usr_id]=cat_id
+        CatalogManager.catalog_list[usr_id] = cat_id
 
     @staticmethod
     def get_cat_id(usr_id):
@@ -115,13 +118,12 @@ class CatalogManager:
 
     @staticmethod
     def get_edit_book(usr_id, book_id='None'):
-        if not usr_id in CatalogManager.edit_list:
+        if usr_id not in CatalogManager.edit_list:
             if book_id != 'None':
                 CatalogManager.edit_list[usr_id] = Book.query.get(book_id)
             else:
                 CatalogManager.edit_list[usr_id] = Book()
         return CatalogManager.edit_list[usr_id]
-
 
     @staticmethod
     def save_edit(usr_id):
@@ -131,7 +133,8 @@ class CatalogManager:
 
     @staticmethod
     def save_propose_edit(usr_id, usr_name):
-        propose_book = ProposeBook(CatalogManager.edit_list[usr_id], usr_id, usr_name)
+        propose_book = ProposeBook(CatalogManager.edit_list[usr_id],
+                                   usr_id, usr_name)
         db.session.add(propose_book)
         db.session.commit()
         CatalogManager.edit_list.pop(usr_id)
@@ -144,20 +147,29 @@ class CatalogManager:
 
         for cat in catalogs:
             keyboard = types.InlineKeyboardMarkup()
-            open_button = types.InlineKeyboardButton(text=u"Открыть", callback_data='edit '+str(cat.id))
-            del_button = types.InlineKeyboardButton(text=u"Удалить", callback_data='deletecatalog '+str(cat.id))
-            add_button = types.InlineKeyboardButton(text=u"Переименовать", callback_data='editcatalog '+str(cat.id))
+            open_button = types.InlineKeyboardButton(
+                text=u"Открыть",
+                callback_data='edit '+str(cat.id)
+                )
+            del_button = types.InlineKeyboardButton(
+                text=u"Удалить",
+                callback_data='deletecatalog '+str(cat.id)
+                )
+            add_button = types.InlineKeyboardButton(
+                text=u"Переименовать",
+                callback_data='editcatalog '+str(cat.id)
+                )
             keyboard.row(open_button, del_button, add_button)
 
             dsc = '*{}*'.format(cat.name)
 
-            yield {'text':dsc, 'buttons':keyboard}
+            yield {'text': dsc, 'buttons': keyboard}
 
     @staticmethod
     def delete_catalog(cat_id):
         cat = Catalog.query.filter_by(id=cat_id).first()
         Book.query.filter_by(catalog=cat.name).delete()
-        #чот говнокод
+        # чот говнокод
         Catalog.query.filter_by(name=cat.name).delete()
         db.session.commit()
 
@@ -173,16 +185,25 @@ class CatalogManager:
 
         for book in books:
             keyboard = types.InlineKeyboardMarkup()
-            del_button = types.InlineKeyboardButton(text=u"Удалить", callback_data='deletebook '+str(book.id))
-            add_button = types.InlineKeyboardButton(text=u"Редактировать", callback_data='editbook '+str(book.id))
-            cat_button = types.InlineKeyboardButton(text=u"Каталог", callback_data='catalogbook '+str(book.id))
+            del_button = types.InlineKeyboardButton(
+                text=u"Удалить",
+                callback_data='deletebook '+str(book.id)
+                )
+            add_button = types.InlineKeyboardButton(
+                text=u"Редактировать",
+                callback_data='editbook '+str(book.id)
+                )
+            cat_button = types.InlineKeyboardButton(
+                text=u"Каталог",
+                callback_data='catalogbook '+str(book.id)
+                )
             keyboard.row(add_button, del_button, cat_button)
 
             dsc = '*{}*\n{} \n'.format(book.name, book.author)
             if book.comments:
                 dsc += '_'+book.comments+'_\n'
 
-            yield {'text':dsc, 'buttons':keyboard}
+            yield {'text': dsc, 'buttons': keyboard}
 
     @staticmethod
     def delete_book(book_id):
@@ -203,16 +224,25 @@ class CatalogManager:
 
         for book in books:
             keyboard = types.InlineKeyboardMarkup()
-            del_button = types.InlineKeyboardButton(text=u"Удалить", callback_data='delprop '+str(book.id))
-            edit_button = types.InlineKeyboardButton(text=u"Редактировать", callback_data='editprop '+str(book.id))
-            add_button = types.InlineKeyboardButton(text=u"Добавить", callback_data='addprop '+str(book.id))
+            del_button = types.InlineKeyboardButton(
+                text=u"Удалить",
+                callback_data='delprop '+str(book.id)
+                )
+            edit_button = types.InlineKeyboardButton(
+                text=u"Редактировать",
+                callback_data='editprop '+str(book.id)
+                )
+            add_button = types.InlineKeyboardButton(
+                text=u"Добавить",
+                callback_data='addprop '+str(book.id)
+                )
             keyboard.row(add_button, del_button, edit_button)
 
             dsc = '*{}*\n{} \n'.format(book.name, book.author)
             if book.comments:
                 dsc += '_'+book.comments+'_\n'
 
-            yield {'text':dsc, 'buttons':keyboard}
+            yield {'text': dsc, 'buttons': keyboard}
 
     @staticmethod
     def add_propose_book(book_id):
@@ -233,10 +263,12 @@ class CatalogManager:
         request = query.query
 
         catalog = Catalog.query.filter(Catalog.name.like(request+'%')).first()
-        db_request = or_(Book.name.like('%'+request+'%'), Book.author.like('%'+request+'%'))
+        db_request = or_(Book.name.like('%'+request+'%'),
+                         Book.author.like('%'+request+'%'))
         if catalog:
-            db_request = or_(Book.catalog==catalog.name, db_request)
-        db_query = Book.query.filter(db_request).limit(books_limit).offset(offset)
+            db_request = or_(Book.catalog == catalog.name, db_request)
+        db_query = Book.query.filter(db_request)
+        db_query = db_query.limit(books_limit).offset(offset)
 
         books = db_query.all()
         return books
@@ -252,18 +284,17 @@ class CatalogManager:
             # генерим инлайновые панельки для книг
             for book in books:
                 title = '"{}" {}'.format(book.name, book.author)
-                # str(i) <- поменять
                 if book.link:
                     result = types.InlineQueryResultDocument(
                         id='book'+str(book.id),
                         title=title,
                         description=book.comments,
                         document_url=book.link, mime_type='application/pdf',
-                        caption=CatalogManager.generate_book_dsc_no_markdown(book)
+                        caption=CatalogManager.book_dsc_no_markdown(book)
                     )
                 else:
-                    book_dsc=types.InputTextMessageContent(
-                        message_text=CatalogManager.generate_book_dsc(book),
+                    book_dsc = types.InputTextMessageContent(
+                        message_text=CatalogManager.book_dsc(book),
                         parse_mode='Markdown',
                         disable_web_page_preview=True
                     )
@@ -285,16 +316,16 @@ class CatalogManager:
         if catalogs:
             answer = []
             for cat in catalogs:
-                #title = '{} {}'.format(book.name, book.author)
-                cat_dsc=types.InputTextMessageContent(
-                    message_text=CatalogManager.generate_catalog_dsc(cat.id),
+                # title = '{} {}'.format(book.name, book.author)
+                cat_dsc = types.InputTextMessageContent(
+                    message_text=CatalogManager.catalog_dsc(cat.id),
                     parse_mode='Markdown',
                     disable_web_page_preview=True
                 )
                 result = types.InlineQueryResultArticle(
                     id='catalog'+str(cat.id),
                     title=cat.name,
-                    #description=cat.name,
+                    # description=cat.name,
                     input_message_content=cat_dsc
                 )
                 answer.append(result)
@@ -303,4 +334,3 @@ class CatalogManager:
         return None
 
     # ---- ----
-

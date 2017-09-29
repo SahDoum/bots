@@ -8,8 +8,8 @@ from telebot import types
 
 import time
 
-#from catalog import engine
-#import time
+# from catalog import engine
+# import time
 
 CHANNEL_NAME = '@mathcatalog'
 
@@ -58,13 +58,15 @@ text_messages = {
         '(https://t.me/mathcatalog)\n'
 }
 
+
 # Обработчик команд в функцию для хендлера распознающую команды
-BOT_NAME = '@sosiska_v_teste_bot'
 def commands_handler(cmnds):
+    BOT_NAME = '@sosiska_v_teste_bot'
+
     def wrapped(msg):
         if not msg.text:
             return False
-        s=msg.text.split(' ')[0]
+        s = msg.text.split(' ')[0]
         if s in cmnds:
             return True
         if s.endswith(BOT_NAME) and s.split('@')[0] in cmnds:
@@ -78,15 +80,18 @@ bot = telebot.TeleBot(API_TOKEN2, threaded=False)
     # ---- BASIC COMMANDS ----
     # ---- ---- ---- ---- ----
 
+
 # Handle '/start'
 @bot.message_handler(func=commands_handler(['/start', '/help']))
 def send_welcome(message):
     bot.send_message(message.chat.id, text_messages['help'])
 
+
 # Handle '/links'
 @bot.message_handler(func=commands_handler(['/links']))
 def links(message):
     bot.send_message(message.chat.id, text_messages['links'], disable_web_page_preview=True, parse_mode='Markdown')
+
 
 def delete_message(message):
     time.sleep(1)
@@ -107,6 +112,7 @@ def msg(message):
     bot.send_message(message.from_user.id, str(message))
 """
 
+
 # Handle '/admin'
 @bot.message_handler(commands=['admin'])
 def admininfo(message):
@@ -119,28 +125,30 @@ def admininfo(message):
     # ---- Просмотр ----
     # ---- ---- ---- ----
 
+
 # Handle '/lit'
 @bot.message_handler(func=commands_handler(['/lit', '/catalog', '/lib']))
 def catalog_list(message):
-    keyboard = CatalogManager.generate_catalogs_button_keyboard()
+    keyboard = CatalogManager.catalogs_button_keyboard()
     catalog_message = bot.reply_to(message, "Список каталогов:", reply_markup=keyboard)
-
     #if message.chat.id == 155493213:
     #    t = threading.Thread(target=delete_message, args=(catalog_message,))
-        #t.daemon = True
+    #    t.daemon = True
     #    t.start()
+
 
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'catalog')
 def callback_inline(call):
     if call.message:
         cat_id = int(call.data.split(' ', maxsplit=1)[1])
-        dsc = CatalogManager.generate_catalog_dsc(cat_id)
+        dsc = CatalogManager.catalog_dsc(cat_id)
         dsc += '_Попробуйте набрать в поле для сообщения_ @sosiska\_v\_teste\_bot _и название/автора/раздел книги, чтобы быстро скинуть её в чат._'
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=dsc, parse_mode='Markdown', disable_web_page_preview=True)
 
     # ---- ---- ----
     # ---- EDIT ----
     # ---- ---- ----
+
 
 # Handle '/edit'
 @bot.message_handler(func=commands_handler(['/edit']))
@@ -157,6 +165,7 @@ def edit(message):
 
     # ---- catalogs edit ----
 
+
 # Handle deletecatalog button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'deletecatalog')
 def deletecatalog_callback_inline(call):
@@ -170,6 +179,7 @@ def deletecatalog_callback_inline(call):
         keyboard.add(del_button)
         bot.send_message(call.message.chat.id, 'Подтвердите удаление каталога', reply_markup=keyboard)
 
+
 # Handle confirm_deletebcatalog button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'confirmdeletebatalog')
 def confirm_deletecatalog_callback_inline(call):
@@ -177,6 +187,7 @@ def confirm_deletecatalog_callback_inline(call):
         cat_id = int(call.data.split(' ', maxsplit=1)[1])
         CatalogManager.delete_catalog(cat_id)
         bot.send_message(call.message.chat.id, 'Каталог удален')
+
 
 # Handle editcatalog button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'editcatalog')
@@ -187,6 +198,7 @@ def editcatalog_callback_inline(call):
         bot.send_message(call.message.chat.id, 'Введите новое название каталога или прервите командой /break:')
         bot.register_next_step_handler(call.message, rename_catalog)
 
+
 def rename_catalog(message):
     if message.text[0] == '/':
         return
@@ -194,6 +206,7 @@ def rename_catalog(message):
     new_name = message.text
     CatalogManager.rename_catalog(cat_id, new_name)
     bot.reply_to(message, 'Каталог переименован')
+
 
 # Handle opencatalog button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'edit')
@@ -207,12 +220,14 @@ def edit_callback_inline(call):
 
     # ---- books edit ----
 
+
 # Handle deletebook button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'deletebook')
 def del_book_callback_inline(call):
     book_id = int(call.data.split(' ')[1])
     CatalogManager.delete_book(book_id)
     bot.edit_message_text('Книга удалена', call.message.chat.id, call.message.message_id, reply_markup=None)
+
 
 # Handle editbook button
 @bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'editbook')
@@ -222,13 +237,14 @@ def edit_book_callback_inline(call):
     CatalogManager.get_edit_book(call.message.chat.id, book_id=book_id)
 
     text = ('Введите описание книги в следующем формате:\n'
-        'Название книги(перенос строки)\n'
-        'Автор или пустая строка(перенос строки)\n'
-        'Комментарии(переносы допускаются)\n\n'
-        'Или прервите запись командой /break')
+            'Название книги(перенос строки)\n'
+            'Автор или пустая строка(перенос строки)\n'
+            'Комментарии(переносы допускаются)\n\n'
+            'Или прервите запись командой /break')
 
     bot.send_message(call.message.chat.id, text)
     bot.register_next_step_handler(call.message, set_description2)
+
 
 # Просто продублировал код как свинья
 def set_description2(message):
@@ -238,9 +254,9 @@ def set_description2(message):
     book = CatalogManager.get_edit_book(message.from_user.id)
     dsc = message.text.split('\n', maxsplit=2)
     book.name = dsc[0]
-    if len(dsc)>=2:
+    if len(dsc) >= 2:
         book.author = dsc[1]
-        if len(dsc)>=3:
+        if len(dsc) >= 3:
             book.comments = dsc[2]
 
     preview = '*"{}"*\n{}\n'.format(book.name, book.author)
@@ -251,6 +267,7 @@ def set_description2(message):
     bot.send_message(message.chat.id, 'Книга успешно изменена!')
 
     # ---- ----
+
 
 # Вот сейчас мне стыдно
 # Handle catalogbook button
@@ -263,12 +280,18 @@ def catalog_book_callback_inline(call):
     bot.send_message(call.message.chat.id, 'Напишите каталог, в который нужно поместить книгу или прервите командой /break', reply_markup=keyboard)
     bot.register_next_step_handler(call.message, set_catalog2)
 
+
 def set_catalog2(message):
     if message.text[0] == '/':
         return
 
     if not CatalogManager.is_catalog_name(message.text):
-        bot.reply_to(message, 'Это не название каталога. Повторите попытку или прервите командой /break', reply_markup=types.ReplyKeyboardRemove())
+        text = 'Это не название каталога. Повторите попытку или прервите командой /break'
+        bot.reply_to(
+                    message,
+                    text,
+                    reply_markup=types.ReplyKeyboardRemove()
+                    )
         bot.register_next_step_handler(message, set_catalog2)
         return
 
@@ -283,6 +306,7 @@ def set_catalog2(message):
     # ---- ---- ----
     # ---- ADDING ----
     # ---- ---- ----
+
 
 # Handle '/addcatalog'
 @bot.message_handler(func=commands_handler(['/addcatalog']))
@@ -299,6 +323,7 @@ def add_new_catalog(message):
         else:
             bot.reply_to(message, 'Ошибка')
 
+
 # Handle '/addbook'
 @bot.message_handler(func=commands_handler(['/addbook', '/add']))
 def add_book(message):
@@ -307,13 +332,14 @@ def add_book(message):
         return
 
     text = ('Введите описание книги в следующем формате:\n'
-        'Название книги(перенос строки)\n'
-        'Автор или пустая строка(перенос строки)\n'
-        'Комментарии(переносы допускаются)\n\n'
-        'Или прервите запись командой /break')
+            'Название книги(перенос строки)\n'
+            'Автор или пустая строка(перенос строки)\n'
+            'Комментарии(переносы допускаются)\n\n'
+            'Или прервите запись командой /break')
 
     bot.reply_to(message, text)
     bot.register_next_step_handler(message, set_description)
+
 
 def set_description(message):
     if message.text[0] == '/':
@@ -323,9 +349,9 @@ def set_description(message):
 
     dsc = message.text.split('\n', maxsplit=2)
     book.name = dsc[0]
-    if len(dsc)>=2:
+    if len(dsc) >= 2:
         book.author = dsc[1]
-        if len(dsc)>=3:
+        if len(dsc) >= 3:
             book.comments = dsc[2]
     """
     preview = '*"{}"*\n{}\n'.format(book.name, book.author)
@@ -336,6 +362,7 @@ def set_description(message):
     keyboard = CatalogManager.get_catalogs_keyboard()
     bot.send_message(message.chat.id, 'Теперь напишите каталог, в который нужно поместить книгу или прервите командой /break', reply_markup=keyboard)
     bot.register_next_step_handler(message, set_catalog)
+
 
 def set_catalog(message):
     if message.text[0] == '/':
@@ -351,6 +378,7 @@ def set_catalog(message):
 
     bot.send_message(message.chat.id, 'Загрузите теперь файл, напишите на него ссылку, пропустите этот шаг командой /skip или прервите командой /break', reply_markup=types.ReplyKeyboardRemove())
     bot.register_next_step_handler(message, set_file)
+
 
 def set_file(message):
     book = CatalogManager.get_edit_book(message.from_user.id)
@@ -370,28 +398,36 @@ def set_file(message):
         book.link = message.text
 
         dsc = channel_book_description(book)
-        bot.send_message(CHANNEL_NAME, dsc, parse_mode='Markdown', disable_notification=True)
+        bot.send_message(CHANNEL_NAME, dsc,
+                         parse_mode='Markdown', disable_notification=True)
         set_book(message)
+
 
 def set_book(message):
     CatalogManager.save_edit(message.from_user.id)
     bot.reply_to(message, 'Книга успешно добавлена!')
 
+
 def upload_book(message):
     book = CatalogManager.get_edit_book(message.from_user.id)
     if message.document.file_size >= 20*1024*1024:
         dsc = channel_book_description(book)
-        bot.send_message(CHANNEL_NAME, dsc, parse_mode='Markdown', disable_notification=True)
-        result = bot.forward_message(CHANNEL_NAME, message.chat.id, message.message_id, disable_notification=True)
+        bot.send_message(CHANNEL_NAME, dsc,
+                         parse_mode='Markdown', disable_notification=True)
+        result = bot.forward_message(CHANNEL_NAME, message.chat.id,
+                                     message.message_id,
+                                     disable_notification=True)
     else:
         dsc = channel_book_description_no_markdown(book)
         file_info = bot.get_file(message.document.file_id)
-        result = bot.send_document(CHANNEL_NAME, file_info.file_id, caption=dsc, disable_notification=True)
+        result = bot.send_document(CHANNEL_NAME, file_info.file_id,
+                                   caption=dsc, disable_notification=True)
     link = 'https://t.me/mathcatalog/%r' % result.message_id
     return link
 
+
 def channel_book_description(book, markdown=True):
-    dsc = '*"{}"*\n{}\n'.format(book.name,book.author)
+    dsc = '*"{}"*\n{}\n'.format(book.name, book.author)
 
     if book.comments:
         dsc += '_'+book.comments+'_\n'
@@ -402,8 +438,9 @@ def channel_book_description(book, markdown=True):
     return dsc
     #return bot.send_message(CHANNEL_NAME, dsc, parse_mode='Markdown')
 
+
 def channel_book_description_no_markdown(book, markdown=True):
-    dsc = '"{}"\n{}\n'.format(book.name,book.author)
+    dsc = '"{}"\n{}\n'.format(book.name, book.author)
 
     if book.comments:
         dsc += book.comments+'\n'
@@ -425,6 +462,7 @@ def channel_book_description_no_markdown(book, markdown=True):
 #    usr.register_user()
 #    bot.reply_to(message, 'Дарова, создатель!')
 
+
 @bot.message_handler(func=commands_handler(['/setadmin']))
 def admin(message):
     usr = User.log_by_message(message)
@@ -434,6 +472,7 @@ def admin(message):
     bot.reply_to(message, 'Перешлите сообщение назначаемого админа')
     bot.register_next_step_handler(message, set_admin)
 
+
 def set_admin(message):
     bot.reply_to(message, str(message))
     usr_id = message.forward_from.id
@@ -441,6 +480,7 @@ def set_admin(message):
     usr = User(usr_id, name, 'Admin')
     usr.register_user()
     bot.reply_to(message, 'Админ добавлен')
+
 
 @bot.message_handler(func=commands_handler(['/setmoder']))
 def moder(message):
@@ -450,6 +490,7 @@ def moder(message):
 
     bot.reply_to(message, 'Перешлите сообщение назначаемого модератора')
     bot.register_next_step_handler(message, set_moder)
+
 
 def set_moder(message):
     bot.reply_to(message, str(message))
@@ -462,6 +503,7 @@ def set_moder(message):
     # ---- ---- ---- ----
     # ---- INLINE MODE ----
     # ---- ---- ---- ----
+
 
 @bot.inline_handler(func=lambda query: len(query.query) > 0)
 def query_doc(query):

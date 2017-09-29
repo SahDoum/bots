@@ -1,17 +1,6 @@
-from bots.settings import SQLALCHEMY_DATABASE_URI
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, BigInteger, String
-from sqlalchemy import TEXT
-
+from sqlalchemy import Column, Integer, BigInteger, String, TEXT
 from bots import db
 
-#engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_recycle=200)
-#Session = sessionmaker(bind=engine)
-#session = Session()
-#Base = declarative_base()
-#md = Base.metadata
 
 class User(db.Model):
     __tablename__ = 'rollclub_users'
@@ -23,7 +12,7 @@ class User(db.Model):
     def __init__(self, chat_id, chat_name, loc_id):
         self.chat_id = chat_id
         self.chat_name = chat_name
-        self.location  = loc_id
+        self.location = loc_id
 
     def __repr__(self):
         return '<User %r Id %r>' % (self.chat_name, self.chat_id)
@@ -39,6 +28,7 @@ class User(db.Model):
             db.session.commit()
             return new_usr
 
+
 class Location(db.Model):
     __tablename__ = 'rollclub_locations'
     id =    Column(Integer, primary_key=True)
@@ -51,6 +41,7 @@ class Location(db.Model):
 
     def __repr__(self):
         return '<Location %r dsc %r>' % (self.key, self.dsc)
+
 
 class Button(db.Model):
     __tablename__ = 'rollclub_buttons'
@@ -65,4 +56,6 @@ class Button(db.Model):
         self.dsc = dsc
 
     def __repr__(self):
-        return '<Button %r act %r dsc %r>' % (self.loc_id, self.act_key, self.dsc)
+        return '<Button %r act %r dsc %r>' % (self.loc_id,
+                                              self.act_key,
+                                              self.dsc)
