@@ -2,8 +2,8 @@ import logging
 
 from bots.settings import API_TOKEN1
 import telebot
-from .fatal import Game, Editor
 
+import bots.rollbot.fatal as fatal
 import dice
 
 import random
@@ -67,10 +67,8 @@ def help(message):
 
 # Handle '/fatal'
 @bot.message_handler(func=commands_handler(['/fatal']))
-def fatal(message):
-    game = Game(message)
-    game.update_location_id()
-    dsc = game.create_description()
+def fatal_message(message):
+    dsc = fatal.create_description()
     bot.send_message(message.chat.id,
                      dsc['text'],
                      parse_mode='Markdown',
@@ -86,14 +84,14 @@ def editfatal(message):
 
 def fatal_file(message):
     if message.document:
-        Editor.delete_all()
+        fatal.Editor.delete_all()
 
         file_info = bot.get_file(message.document.file_id)
         file = bot.download_file(file_info.file_path)
         with open('bots/rollbot/locations.xml', 'wb') as new_file:
             new_file.write(file)
         with open('bots/rollbot/locations.xml', 'r') as read_file:
-            Editor.import_from_file(read_file)
+            fatal.Editor.import_from_file(read_file)
         bot.reply_to(message, 'Добавлено!')
 
 # ---- ----
@@ -184,17 +182,23 @@ def gurps_file(message):
 
 
 # FATAL
-@bot.message_handler(func=lambda m: True, content_types=['text'])
-def register_fatal(message):
-    game = Game(message)
-    if not game.is_msg_fatal(message.text):
-        return
-    game.update_location_id(message.text)
-    dsc = game.create_description()
-    bot.reply_to(message,
-                 dsc['text'],
-                 parse_mode='Markdown',
-                 reply_markup=dsc['buttons'])
+@bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'f')
+def fatal_callback(call):
+    dsc = fatal.create_description(call)
+    add_fatal_dsc_to(call.message, dsc)
+
+
+def add_fatal_dsc_to(msg, dsc):
+    text = msg.text + '\n\n' + dsc['text']
+    text = '>>' + '>>'.join(text.split('>>')[-3:])
+
+    bot.edit_message_text(
+        chat_id=msg.chat.id,
+        message_id=msg.message_id,
+        text=text,
+        reply_markup=dsc['buttons'],
+        parse_mode='Markdown'
+        )
 
 
 @bot.message_handler(func=lambda m: True, content_types=['new_chat_members'])

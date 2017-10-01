@@ -1,75 +1,60 @@
-from .models import User, Location, Button
+from .models import Location, Button
 from bots import db
 from telebot import types
 import random
 
 from bs4 import BeautifulSoup
 
-KEYBOARD_REMOVE_MARKUP = types.ReplyKeyboardRemove()
+
+def create_description(callback=None):
+    if callback:
+        btn_id = int(callback.data.split(' ')[1])
+        btn = Button.query.get(btn_id)
+        loc_key = btn.act_key
+
+        if loc_key == 'default':
+            return {'text': callback_title(callback),
+                    'buttons': None
+                    }
+    else:
+        loc_key = 'default'
+
+    loc_list = Location.query.filter_by(key=loc_key).all()
+    loc = random.choice(loc_list)
+    btn_list = Button.query.filter_by(loc_id=loc.id).all()
+
+    dsc_title = callback_title(callback)
+    text = dsc_title + loc.dsc
+    markup = create_keyboard(btn_list)
+    dsc = {'text': text, 'buttons': markup}
+    return dsc
 
 
-class Game:
+def create_keyboard(btn_list):
+    markup = None
+    if btn_list:
+        markup = types.InlineKeyboardMarkup()
+        for btn in btn_list:
+            inline_button = types.InlineKeyboardButton(
+                text=btn.dsc,
+                callback_data="f "+ str(btn.id)
+                )
+            markup.add(inline_button)
+    return markup
 
-    def __init__(self, message):
-        if message.chat.type == 'private':
-            chat_name = message.from_user.username
-        else:
-            chat_name = message.chat.title
-        self.usr = User.logUser(message.chat.id, chat_name)
 
-    def is_msg_fatal(self, msg):
-        btn = Button.query.filter_by(loc_id=self.usr.location, dsc=msg).first()
-        if btn:
-            return True
-        else:
-            return False
+def callback_title(callback):
+        if not callback:
+            return ''
 
-    def update_location_id(self, msg=''):
-        loc_id = self.usr.location
+        author = ''
+        if callback.message.chat.type != 'private':
+            author = '@' + callback.from_user.username + ' '
 
-        if msg == '':
-            if loc_id == -1:
-                loc_key = 'default'
-            else:
-                # loc_key = 'default'
-                return
-        else:
-            btn = Button.query.filter_by(loc_id=loc_id, dsc=msg).first()
-            if btn:
-                loc_key = btn.act_key
-            else:
-                return
-
-        loc_list = Location.query.filter_by(key=loc_key).all()
-        loc = random.choice(loc_list)
-        self.usr.location = loc.id
-        db.session.commit()
-
-    def create_description(self):
-        loc_id = self.usr.location
-        loc = Location.query.get(loc_id)
-        btn_list = Button.query.filter_by(loc_id=loc_id).all()
-
-        if loc is None:
-            self.usr.location = -1
-            db.session.commit()
-            return {'text': str(loc_id), 'buttons': None}
-
-        text = loc.dsc
-
-        markup = None
-        if btn_list:
-            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True,
-                                               resize_keyboard=True)
-            for btn in btn_list:
-                markup.add(btn.dsc)
-        else:
-            markup = KEYBOARD_REMOVE_MARKUP
-            self.usr.location = -1
-            db.session.commit()
-
-        dsc = {'text': text, 'buttons': markup}
-        return dsc
+        btn_id = int(callback.data.split(' ')[1])
+        btn = Button.query.get(btn_id)
+        title = author + '*>> '+btn.dsc+'*\n\n'
+        return title
 
 
 class Editor:
@@ -93,7 +78,7 @@ class Editor:
 
     @staticmethod
     def add_location(loc):
-        dsc = str(loc.find(text=True, recursive=False))
+        dsc = str(loc.find(text=True, recursive=False)).strip()
         key = str(loc['key'])
         location = Location(key, dsc)
         db.session.add(location)

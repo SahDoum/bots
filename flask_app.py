@@ -48,7 +48,6 @@ def webhook2():
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
         bot2.process_new_updates([update])
-        time.sleep(1)
         return ''
     else:
         abort(403)
