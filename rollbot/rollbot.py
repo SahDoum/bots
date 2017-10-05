@@ -1,4 +1,7 @@
 import logging
+import re
+import threading
+import time
 
 from bots.settings import API_TOKEN1
 import telebot
@@ -8,6 +11,23 @@ import dice
 
 import random
 from bs4 import BeautifulSoup
+
+
+# Command list handler function
+def commands_handler(cmnds, inline=False):
+    BOT_NAME = '@rollclub_bot'
+
+    def wrapped(msg):
+        if not msg.text:
+            return False
+        split_message = re.split(r'[^\w@\/]', msg.text)
+        if not inline:
+            s = split_message[0]
+            return (s in cmnds) or (s.endswith(BOT_NAME) and s.split('@')[0] in cmnds)
+        else:
+            return any(cmnd in split_message or cmnd + BOT_NAME in split_message for cmnd in cmnds)
+
+    return wrapped
 
 text_messages = {
     'help':
@@ -29,26 +49,27 @@ text_messages = {
         u'For more information use command /help\n'
 }
 
-
-# Обработчик команд в функцию для хендлера распознающую команды
-def commands_handler(cmnds):
-    BOT_NAME = '@rollclub_bot'
-
-    def wrapped(msg):
-        if not msg.text:
-            return False
-        s = msg.text.split(' ')[0]
-        if s in cmnds:
-            return True
-        if s.endswith(BOT_NAME) and s.split('@')[0] in cmnds:
-            return True
-        return False
-    return wrapped
-
 logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)
 
 bot = telebot.TeleBot(API_TOKEN1, threaded=False)
+
+# ---- DUEL ----
+
+
+# Handle '/duel'
+@bot.message_handler(func=commands_handler(['/duel']))
+def duel_start(message):
+    t = threading.Thread(target=bomm, args=(message, ))
+    t.daemon = True
+    t.start()
+
+def bomm(message):
+    for i in range(6):
+        bot.reply_to(message, 'Booooom')
+        time.sleep(5)
+
+# ---- INFO ----
 
 
 # Handle '/start'
@@ -68,11 +89,45 @@ def help(message):
 # Handle '/fatal'
 @bot.message_handler(func=commands_handler(['/fatal']))
 def fatal_message(message):
+    # title = ''
+    # if message.chat.type != 'private':
+    #         title = fatal.user_to_author(message.from_user)
+    # title += '*>> /fatal*\n\n'
+
     dsc = fatal.create_description()
     bot.send_message(message.chat.id,
                      dsc['text'],
                      parse_mode='Markdown',
                      reply_markup=dsc['buttons'])
+
+
+@bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'f')
+def fatal_callback(call):
+    dsc = fatal.create_description(call)
+    add_fatal_dsc_to(call.message, dsc)
+
+
+def add_fatal_dsc_to(msg, dsc):
+    text = fatal.escape_markdown(msg.text) + '\n\n' + dsc['text']
+    if text.count('>>') >= 3:
+        if msg.chat.type == 'private':
+            text = '>>' + text[2:].split('>>', maxsplit=1)[1]
+            bot.reply_to(msg, 'private')
+        else:
+            at_symb = text.find('@', 1)
+            dl_symb = text.find('$', 1)
+            if at_symb > dl_symb:
+                text = '@' + text[1:].split('@', maxsplit=1)[1]
+            else:
+                text = '$' + text[1:].split('$', maxsplit=1)[1]
+
+    bot.edit_message_text(
+        chat_id=msg.chat.id,
+        message_id=msg.message_id,
+        text=text,
+        reply_markup=dsc['buttons'],
+        parse_mode='Markdown'
+        )
 
 
 # Handle '/editfatal'
@@ -163,7 +218,7 @@ def gurps(message):
         bot.reply_to(message, ab.text, parse_mode='Markdown')
 
 
-# Handle '/editfatal'
+# Handle '/editgurpsl'
 @bot.message_handler(func=commands_handler(['/editgurps']))
 def editgurps(message):
     bot.reply_to(message, 'Вкидывай файл:')
@@ -179,26 +234,6 @@ def gurps_file(message):
         bot.reply_to(message, 'Добавлено!')
 
 # ---- NOT-COMAND HANDLERS ---- #
-
-
-# FATAL
-@bot.callback_query_handler(func=lambda call: call.data.split(' ')[0] == 'f')
-def fatal_callback(call):
-    dsc = fatal.create_description(call)
-    add_fatal_dsc_to(call.message, dsc)
-
-
-def add_fatal_dsc_to(msg, dsc):
-    text = msg.text + '\n\n' + dsc['text']
-    text = '>>' + '>>'.join(text.split('>>')[-3:])
-
-    bot.edit_message_text(
-        chat_id=msg.chat.id,
-        message_id=msg.message_id,
-        text=text,
-        reply_markup=dsc['buttons'],
-        parse_mode='Markdown'
-        )
 
 
 @bot.message_handler(func=lambda m: True, content_types=['new_chat_members'])

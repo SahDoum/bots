@@ -8,12 +8,11 @@ import telebot
 from bots import db
 from bots.settings import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_DATABASE_URI2
 
-import time
-
 bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH1) # Should be set only once - then you can cut this line
 bot2.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH2)  # Should be set only once - then you can cut this line
 
 app = Flask(__name__)
+
 
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI2
 app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
@@ -28,6 +27,7 @@ db.init_app(app)
 
 @app.route('/')
 def hello_world():
+
     with open('/var/log/sahdoum.pythonanywhere.com.error.log', 'r') as error_log_file:
         return '<pre>' + ''.join(error_log_file.readlines()[-1000:-1]) + '</pre>'
 

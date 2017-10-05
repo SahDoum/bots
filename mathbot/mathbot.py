@@ -109,7 +109,8 @@ def doc(message):
 
 @bot.message_handler(content_types=["text"])
 def msg(message):
-    bot.send_message(message.from_user.id, str(message))
+    bot.send_message(message.from_user.id, str(message.entities[0].type))
+
 """
 
 

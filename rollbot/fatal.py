@@ -5,6 +5,8 @@ import random
 
 from bs4 import BeautifulSoup
 
+#from telegram.utils.helpers import escape_markdown
+
 
 def create_description(callback=None):
     if callback:
@@ -49,13 +51,22 @@ def callback_title(callback):
 
         author = ''
         if callback.message.chat.type != 'private':
-            author = '@' + callback.from_user.username + ' '
-
+            author = user_to_author(callback.from_user)
         btn_id = int(callback.data.split(' ')[1])
         btn = Button.query.get(btn_id)
-        title = author + '*>> '+btn.dsc+'*\n\n'
+        title = author + '*>> ' + btn.dsc + '*\n\n'
         return title
 
+
+def user_to_author(usr):
+    if usr.username:
+        author = '@' + usr.username + ' '
+    else:
+        author = '$ ' + usr.first_name + ' '
+    return escape_markdown(author)
+
+def escape_markdown(str):
+    return str.replace('_', '\_')
 
 class Editor:
 
